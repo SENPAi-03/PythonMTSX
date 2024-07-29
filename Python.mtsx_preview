@@ -1,0 +1,74 @@
+#!/usr/bin/env python
+
+import os, sys
+
+class Python:
+  def __new__(cls, self, *args, **kwargs):
+    ...
+
+  def __init__(cls, self, *args, **kwargs):
+    ...
+
+  def ic():
+    """
+    DOCSTRING
+    """
+    # FIXME, or don't
+    return NotImplementedError("ic() is missing.")
+
+
+def main() -> None:
+  python: Python = Python(.9j, 0O_3, 0xf, 0l, 3j, f"out: {1.40283:.3f}")
+  pythonic = python.ic()
+  print("abc", str(long(1e1)), sep='\n')
+
+if __name__ == "__main__":
+  main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
