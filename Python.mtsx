@@ -1,0 +1,403 @@
+{
+    name: ["Python", ".py"]
+    hide: true // debugging
+
+
+    comment: {
+        startsWith: "#"
+        addToContains: false
+    }
+
+
+    styles: [
+        "background"  #F1F1F1    #1F1F1F
+        "codetag"     #FF0000    #A8C023    @_
+        "comment"     #9C938A    #808080    @_
+        "default"     #282828    #A9B7C6    @_
+        "decorator"   #6EE7EE    #BBB529    @_
+        "docstring"   #048600    #629755    @I
+        "dunder"      #3165C5    #B200B2    @_
+        "function"    #1E6F94    #FFCB6B    @_
+        "keyword"     #C70808    #CC7832    @_
+        "method"      #6EE7EE    #8888C6    @_
+        "number"      #267F99    #6897BB    @_
+        "parameter"   #830000    #CA5936    @_
+        "shebang"     #000000    #F0F0F0    @BU
+        "string"      #499708    #6A8759    @_
+        "variable"    #3165C5    #94558D    @_
+    ]
+
+    lineBackground: {match: /(?s).*/ style: "background"}
+
+    defines: [
+        "alpha": /\b((?i)[a-z_]\w*)\b/
+        "escape": /\\(x[0-9A-Fa-f]{2}|[0-7]{1,3}|[\\"'abfnrtv]|u[0-9A-Fa-f]{4}|U00[0-1]0[0-9A-Fa-f]{4})/ // \U10FFFF is the max unicode value
+        "escaped": [
+            {match: include("escape") 0: "keyword"}
+            {match: /(\\.)\b/ 1: "error"}
+        ]
+
+        "flo": {match: /(?<!\w)(?:(?:\.[0-9](?:_?[0-9])*|[0-9](?:_?[0-9])*\.[0-9](?:_?[0-9])*|[0-9](?:_?[0-9])*\.)(?:[eE][+-]?[0-9](?:_?[0-9])*)?|[0-9](?:_?[0-9])*(?:[eE][+-]?[0-9](?:_?[0-9])*))([jJ])?\b/ 0: "number" 1: "keyword"}
+        "dec": {match: /(?<![\w.])(?:[1-9](?:_?[0-9])*|0+|[0-9](?:_?[0-9])*([jJ])|0([0-9]+)(?![eE\.]))\b/ 0: "number" 1: "keyword"}
+        "hex": {match: /(?<![\w.])(0[xX])(_?[0-9a-fA-F])+\b/ 0: "number" 1: "keyword"}
+        "oct": {match: /(?<![\w.])(0[oO])(_?[0-7])+\b/ 0: "number" 1: "keyword"}
+        "bin": {match: /(?<![\w.])(0[bB])(_?[01])+\b/ 0: "number" 1: "keyword"}
+        "lon": {match: /(?<![\w.])(?:[1-9][0-9]*|0)([lL])\b/ 0: "number" 1: "keyword"}
+        "#constant.numeric.python": [
+            {include: "flo"}
+            {include: "dec"}
+            {include: "hex"}
+            {include: "oct"}
+            {include: "bin"}
+            {include: "lon"}
+        ]
+
+        "#definition.shebangs.python": {
+            match: /\A(#!).*|$/
+            0: "shebang"
+        }
+
+        "#definition.comments.python": {
+            style: "comment"
+            start: {match: "#"}
+            end: {match: "(?m)\n|$"}
+            contains: [
+                {
+                    match: "\\b(NOTE|XXX|HACK|FIXME|BUG|TODO)\\b"
+                    0: "codetag"
+                }
+            ]
+        }
+
+        "#definition.docstrings.python": [
+            {
+                style: "docstring"
+                start: {match: /(?m)^\s*"""/}
+                end: {match: /"""|$/}
+            }
+            {
+                style: "docstring"
+                start: {match: /(?m)^\s*'''/}
+                end: {match: /'''|$/}
+            }
+        ]
+
+        "#definition.strings.python": [
+            {include: "#definition.single.strings.python"}
+            {include: "#definition.double.strings.python"}
+        ]
+
+        // We still need to define br"" and fr""
+        "#definition.single.strings.python": [
+            {
+                style: "string"
+                start: {match: /\b(?i)(f)'''/ 1: "keyword"}
+                end: {match: /'''|$/}
+                contains: [
+                    {
+                        style: "keyword"
+                        start: {match: /\{/}
+                        end: {match: /\}/}
+                        contains: [
+                            {match: /\{|'''/} => FAIL
+                            {match: /(\w+)(:[^{}"']*)/ 0: "string", 1: "number", 2: "keyword"}
+                            {include: "#definition.mtsx.python"}
+                        ]
+                    }
+                    {match: /(\{|\})/ 1: "error"}
+                    {include: "escaped"}
+                ]
+            }
+            {
+                style: "string"
+                start: {match: /\b(?i)(r)'''/ 1: "keyword"}
+                end: {match: /'''|$/}
+                contains: [
+                    {match: /\\'/ 0: "keyword"}
+                ]
+            }
+            {
+                style: "string"
+                start: {match: /(\b(?i)(:?[bu]))?'''/ 1: "keyword"}
+                end: {match: /'''|$/}
+                contains: [
+                    {include: "escaped"}
+                ]
+            }
+
+
+            {
+                style: "string"
+                start: {match: /\b(?i)(f)'/ 1: "keyword"}
+                end: {match: /(?<!\\)(?m)'|$/}
+                contains: [
+                    {
+                        style: "keyword"
+                        start: {match: /\{/}
+                        end: {match: /\}/}
+                        contains: [
+                            {match: /\{|'/} => FAIL
+                            {match: /(\w+)(:[^{}"']*)/ 0: "string", 1: "number", 2: "keyword"}
+                            {include: "#definition.mtsx.python"}
+                        ]
+                    }
+                    {match: /(\{|\})/ 1: "error"}
+                    {include: "escaped"}
+                ]
+            }
+            {
+                style: "string"
+                start: {match: /\b(?i)(r)'/ 1: "keyword"}
+                end: {match: /(?<!\\)(?m)'|$/}
+                contains: [
+                    {match: /\\'/ 0: "keyword"}
+                ]
+            }
+            {
+                style: "string"
+                start: {match: /(\b(?i)(:?[bu]))?'/ 1: "keyword"}
+                end: {match: /(?<!\\)(?m)'|$/}
+                contains: [
+                    {include: "escaped"}
+                ]
+            }
+
+
+            {
+                style: "error"
+                start: {match: /(?<!''')\b\w+'''/}
+                end: {match: /'''|$/}
+            }
+            {
+                style: "error"
+                start: {match: /(?<!')\b\w+'/}
+                end: {match: /(?<!\\)(?m)'|$/}
+            }
+        ]
+
+        "#definition.double.strings.python": [
+            {
+                style: "string"
+                start: {match: /\b(?i)(f)"""/ 1: "keyword"}
+                end: {match: /"""|$/}
+                contains: [
+                    {
+                        style: "keyword"
+                        start: {match: /\{/}
+                        end: {match: /\}/}
+                        contains: [
+                            {match: /\{|"""/} => FAIL
+                            {match: /(\w+)(:[^}""]*)/ 0: "string", 1: "number", 2: "keyword"}
+                            {include: "#definition.mtsx.python"}
+                        ]
+                    }
+                    {include: "escaped"}
+                ]
+            }
+            {
+                style: "string"
+                start: {match: /\b(?i)(r)"""/ 1: "keyword"}
+                end: {match: /"""|$/}
+                contains: [
+                    {match: /\\"/ 0: "keyword"}
+                ]
+            }
+            {
+                style: "string"
+                start: {match: /(\b(?i)(:?[bu]))?"""/ 1: "keyword"}
+                end: {match: /"""|$/}
+                contains: [
+                    {include: "escaped"}
+                ]
+            }
+
+
+            {
+                style: "string"
+                start: {match: /\b(?i)(f)"/ 1: "keyword"}
+                end: {match: /(?<!\\)(?m)"|$/}
+                contains: [
+                    {
+                        style: "keyword"
+                        start: {match: /\{/}
+                        end: {match: /\}/}
+                        contains: [
+                            {match: /\{|"/} => FAIL
+                            {match: /(\w+)(:[^}""]*)/ 0: "string", 1: "number", 2: "keyword"}
+                            {include: "#definition.mtsx.python"}
+                        ]
+                    }
+                    {include: "escaped"}
+                ]
+            }
+            {
+                style: "string"
+                start: {match: /\b(?i)(r)"/ 1: "keyword"}
+                end: {match: /(?<!\\)(?m)"|$/}
+                contains: [
+                    {match: /\\"/ 0: "keyword"}
+                ]
+            }
+            {
+                style: "string"
+                start: {match: /(\b(?i)(:?[bu]))?"/ 1: "keyword"}
+                end: {match: /(?<!\\)(?m)"|$/}
+                contains: [
+                    {include: "escaped"}
+                ]
+            }
+
+
+            {
+                style: "error"
+                start: {match: /(?<!""")\b\w+"""/}
+                end: {match: /"""|$/}
+            }
+            {
+                style: "error"
+                start: {match: /(?<!")\b\w+"/}
+                end: {match: /(?<!\\)(?m)"|$/}
+            }
+        ]
+
+        "#definition.specials.python": {
+            match: keywordsToRegex("cls self")
+            0: "variable"
+        }
+
+        "#definition.functions.python": {
+            match: keywordsToRegex(
+                "bool bytearray bytes classmethod complex dict zip" +
+                "float frozenset vars list object property set dir" +
+                "slice staticmethod setattr tuple type abs all any" +
+                "ascii bin breakpoint locals callable open compile" +
+                "__import__ copyright credits delattr divmod print" +
+                "enumerate input exit filter format getattr reload" +
+                "round isinstance issubclass iter eval license map" +
+                "hash help hex max memoryview min next oct sum int" +
+                "ord pow str quit sorted reload repr reversed exec" +
+                "globals chr id len range hasattr"
+                )
+            0: "method"
+        }
+
+        "#definition.exceptions.python": {
+            match: "\\b(?:" +
+                "(" +
+                "Arithmetic|Assertion|Attribute|Buffer|BlockingIO|" +
+                "BrokenPipe|Overflow|Connection|ConnectionAborted|" +
+                "ConnectionRefused|ConnectionReset|Environment|IO|" +
+                "FileExists|FileNotFound|FloatingPoint|Import|EOF|" +
+                "Indentation|NotADirectory|UnicodeTranslate|Value|" +
+                "Permission|ProcessLookup|Type|Timeout|Memory|Key|" +
+                "Unicode|NotImplemented|OS|ChildProcess|Reference|" +
+                "ModuleNotFound|Recursion|UnboundLocal|Tab|Lookup|" +
+                "Windows|ZeroDivision|Syntax|System|UnicodeEncode|" +
+                "UnicodeDecode|Runtime|Unicode|Index|IsADirectory|" +
+                "Interrupted" +
+                ")" + "Error" +
+                "|" +
+                "(" +
+                "Deprecation|Unicode|Resource|Runtime|Syntax|User|" +
+                "Future|Import|Bytes|PendingDeprecation" +
+                ")" + "Warning" +
+                "|" +
+                "(" +
+                "(System|Generator)Exit|Stop(Async)?Iteration|" +
+                "KeyboardInterrupt|(Base)?Exception" +
+                ")" + ")\\b"
+            0: "method"
+        }
+
+        "#definition.variables.python": {
+            match: keywordsToRegex(
+                "file reduce intern raw_input unicode" +
+                "cmp basestring execfile long xrange")
+            0: "keyword2"
+        }
+
+        "#definition.keywords.python": {
+            match: keywordsToRegex(
+                "False await else import pass None break except in raise True" +
+                "class finally is return and continue for lambda try as def from" +
+                "nonlocal while assert del global not with async elif if or yield" +
+                "Ellipsis NotImplemented" +
+                "match case")
+            0: "keyword"
+        }
+
+        "#definition.dunders.python": {
+            match: "(?<=\\bdef)?\\s*" + "\\b__(?:" +
+                "abs|add|aenter|aexit|aiter|call|anext|await|bool|" +
+                "and|eq|class_getitem|cmp|coerce|complex|contains|" +
+                "copy|getattr|del|delattr|delete|delitem|delslice|" +
+                "dir|div|divmod|gt|ceil|exit|float|floor|floordiv|" +
+                "getitem|ge|get|deepcopy|getattribute|getinitargs|" +
+                "getnewargs|getslice|getstate|enter|hex|iadd|iand|" +
+                "hash|idiv|ifloordiv|ilshift|imod|imul|index|init|" +
+                "instancecheck|int|invert|ior|format|irshift|isub|" +
+                "iter|itruediv|ixor|le|len|long|lshift|lt|missing|" +
+                "mod|mul|ne|neg|new|next|nonzero|oct|ipow|pos|pow|" +
+                "radd|rand|rdiv|rdivmod|reduce|reduce_ex|reversed|" +
+                "rfloordiv|rlshift|rmod|or|ror|round|rpow|rrshift|" +
+                "rshift|rsub|rtruediv|rxor|set|setattr|sizeof|str|" +
+                "setitem|set_name|setslice|setstate|truediv|trunc|" +
+                "unicode|xor|matmul|rmatmul|imatmul|init_subclass|" +
+                "repr|subclasscheck|set_name|fspath|bytes|prepare|" +
+                "rmul|annotations|bases|builtins|class|code|debug|" +
+                "subclasses|dict|doc|file|func|kwdefaults|members|" +
+                "metaclass|methods|module|mro|mro_entries|version|" +
+                "qualname|post_init|signature|slots|defaults|spec|" +
+                "traceback|weakref|wrapped|classcell|path|package|" +
+                "future|sub|all|name"                               +
+                ")__\\b"
+            0: "dunder"
+        }
+
+        "#definition.brackets.python": {
+            style: "default"
+            start: {match: "(\\()"}
+            end: {match: "(\\))"}
+            contains: [
+                {include: "#definition.mtsx.python"} // just include everything at once 🗿
+                {
+                    match: include("alpha") + "\\s*(=)(?!=)"
+                    1: "parameter"
+                }
+                {match: "," 0: "keyword"}
+            ]
+        }
+
+        "#definition.members.python": {
+            match: "(?<=\\b(async\\s)?def)\\s*" + include("alpha") + "\\s*(?=\\()"
+            0: "function"
+        }
+
+        "#definition.decorators.python": {
+            match: "@" + include("alpha")
+            0: "decorator"
+        }
+
+        "#definition.mtsx.python": [
+            {include: "#constant.numeric.python"                    }
+            {include: "#definition.shebangs.python"                 }
+            {include: "#definition.comments.python"                 }
+            {include: "#definition.docstrings.python"               }
+            {include: "#definition.specials.python"                 }
+            {include: "#definition.strings.python"                  }
+            {include: "#definition.functions.python"                }
+            {include: "#definition.exceptions.python"               }
+            {include: "#definition.variables.python"                }
+            {include: "#definition.keywords.python"                 }
+            {include: "#definition.dunders.python"                  }
+            {include: "#definition.brackets.python"                 }
+            {include: "#definition.members.python"                  }
+            {include: "#definition.decorators.python"               }
+        ]
+    ]
+
+
+    contains: [
+        {include: "#definition.mtsx.python"}
+    ]
+}
